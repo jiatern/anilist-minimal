@@ -7,15 +7,47 @@
     <script src="https://cdn.tailwindcss.com"></script>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=block" rel="stylesheet">
     <style>
         body { background-color: #2b2b2b; color: #e2e2e2; font-family: Ubuntu; }
+        .item-row { animation: slideInUp 0.3s ease-out; }
         .item-row:hover { background-color: rgba(255, 255, 255, 0.05); cursor: pointer; }
         .thumb-square { width: 48px; height: 48px; object-fit: cover; object-position: center; border-radius: 4px; }
         .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; opacity: 1 !important; }
         .loading-spinner { border: 2px solid rgba(255,255,255,0.1); border-top: 2px solid #3b82f6; border-radius: 50%; width: 14px; height: 14px; animation: spin 0.8s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        /* Animations */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        
+        .loading-indicator { animation: fadeIn 0.3s ease-out; }
+        #search-modal.active { animation: fadeIn 0.2s ease-out; }
+        #search-modal > div { animation: slideInUp 0.3s ease-out; }
+        #edit-modal.active { animation: fadeIn 0.2s ease-out; }
+        #edit-modal > div { animation: slideInUp 0.3s ease-out; }
+        
+        #search-modal.closing { animation: fadeOut 0.2s ease-out forwards; }
+        #search-modal.closing > div { animation: slideDown 0.3s ease-out forwards; }
+        #edit-modal.closing { animation: fadeOut 0.2s ease-out forwards; }
+        #edit-modal.closing > div { animation: slideDown 0.3s ease-out forwards; }
+        
+        @keyframes slideDown { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(20px); } }
+        
+        .search-result-item { animation: slideIn 0.3s ease-out; }
+        .search-result-item:nth-child(2) { animation-delay: 0.05s; }
+        .search-result-item:nth-child(3) { animation-delay: 0.1s; }
+        .search-result-item:nth-child(4) { animation-delay: 0.15s; }
+        .search-result-item:nth-child(5) { animation-delay: 0.2s; }
+        
+        #sync-btn.pulse { animation: pulse 0.6s ease-in-out; }
+        
+        /* Success message */
+        #success-message { animation: slideInUp 0.3s ease-out, fadeOut 0.3s ease-out 2.7s forwards; }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
     </style>
 </head>
 <body class="min-h-screen pb-10">
@@ -42,19 +74,23 @@
             </div>
         </header>
 
-        <nav class="flex gap-6 border-b border-white/5 mb-6 overflow-x-auto">
-            <button onclick="switchTab('CURRENT')" id="tab-CURRENT" class="pb-3 text-sm opacity-50 tab-active whitespace-nowrap">Watching</button>
-            <button onclick="switchTab('PLANNING')" id="tab-PLANNING" class="pb-3 text-sm opacity-50 whitespace-nowrap">Planning</button>
-            <button onclick="switchTab('COMPLETED')" id="tab-COMPLETED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Completed</button>
-            <button onclick="switchTab('DROPPED')" id="tab-DROPPED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Dropped</button>
-            <button onclick="switchTab('PAUSED')" id="tab-PAUSED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Paused</button>
+        <nav class="flex gap-6 border-b border-white/5 mb-2 overflow-x-auto">
+            <button onclick="switchTab('CURRENT')" id="tab-CURRENT" class="pb-3 text-sm opacity-50 tab-active whitespace-nowrap">Watching <span id="count-CURRENT" class="text-xs opacity-40">(0)</span></button>
+            <button onclick="switchTab('PLANNING')" id="tab-PLANNING" class="pb-3 text-sm opacity-50 whitespace-nowrap">Planning <span id="count-PLANNING" class="text-xs opacity-40">(0)</span></button>
+            <button onclick="switchTab('COMPLETED')" id="tab-COMPLETED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Completed <span id="count-COMPLETED" class="text-xs opacity-40">(0)</span></button>
+            <button onclick="switchTab('DROPPED')" id="tab-DROPPED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Dropped <span id="count-DROPPED" class="text-xs opacity-40">(0)</span></button>
+            <button onclick="switchTab('PAUSED')" id="tab-PAUSED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Paused <span id="count-PAUSED" class="text-xs opacity-40">(0)</span></button>
         </nav>
 
         <div id="loading-indicator" class="hidden flex items-center gap-2 text-xs opacity-50 mb-4">
             <div class="loading-spinner"></div> <span id="loading-text">Loading...</span>
         </div>
 
-        <div id="list-container" class="flex flex-col border-t border-white/5"></div>
+        <div id="success-message" class="hidden fixed top-4 right-4 bg-green-600/90 text-white px-4 py-3 rounded-lg text-sm font-medium shadow-lg">
+            ✓ Sync complete
+        </div>
+
+        <div id="list-container" class="flex flex-col"></div>
     </div>
 
     <div id="search-modal" onclick="handleOutsideClick(event)" class="fixed inset-0 bg-black/85 hidden z-50 flex items-center justify-center p-4">
@@ -66,6 +102,23 @@
             <div class="p-4">
                 <input type="text" id="search-in" placeholder="Search..." class="w-full bg-[#2b2b2b] p-3 rounded border border-white/10 outline-none focus:border-blue-500 mb-4 text-sm">
                 <div id="search-results" class="space-y-1 max-h-60 overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-status-modal" onclick="handleOutsideClick(event)" class="fixed inset-0 bg-black/85 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-[#1f1f1f] w-full max-w-sm rounded-xl overflow-hidden border border-white/5 shadow-2xl">
+            <div class="p-4 border-b border-white/5 flex justify-between">
+                <span class="text-xs font-bold uppercase opacity-50">Add to List</span>
+                <button onclick="toggleModal('add-status-modal', false)" class="opacity-50 text-xl px-2">&times;</button>
+            </div>
+            <div class="p-4 space-y-2">
+                <button onclick="addAnimeWithStatus('CURRENT')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Watching</button>
+                <button onclick="addAnimeWithStatus('PLANNING')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Planning</button>
+                <button onclick="addAnimeWithStatus('COMPLETED')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Completed</button>
+                <button onclick="addAnimeWithStatus('DROPPED')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Dropped</button>
+                <button onclick="addAnimeWithStatus('PAUSED')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Paused</button>
+                <button onclick="addAnimeWithStatus('REPEATING')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Rewatching</button>
             </div>
         </div>
     </div>
@@ -117,6 +170,9 @@
                     <button id="save-edit-btn" class="w-full bg-blue-600 hover:bg-blue-700 py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg active:scale-[0.98]">
                         Save Changes
                     </button>
+                    <button id="delete-entry-btn" class="w-full border border-red-500/50 text-red-500 hover:bg-red-500/10 py-2 rounded-lg text-xs font-bold transition mt-2">
+                        Delete from List
+                    </button>
                 </div>
             </div>
         </div>
@@ -124,10 +180,11 @@
 
     <script>
         const API = 'https://graphql.anilist.co';
-        const CACHE_EXPIRY = 1000 * 60 * 30; 
+        const CACHE_EXPIRY = 1000 * 60 * 240; 
         const CACHE_KEY = `cache_v4_full_list`; // Bumped key
         let currentTab = 'CURRENT';
         let username = "";
+        let pendingAnimeToAdd = null;
 
         function checkAuth() {
             const token = localStorage.getItem('anilist_token');
@@ -148,8 +205,15 @@
 
         async function initApp() {
             try {
-                const data = await gql(`query { Viewer { name } }`);
-                username = data.Viewer.name;
+                // Check if we have cached username
+                let cachedUsername = localStorage.getItem('anilist_username');
+                if (!cachedUsername) {
+                    // Only fetch if not cached
+                    const data = await gql(`query { Viewer { name } }`);
+                    cachedUsername = data.Viewer.name;
+                    localStorage.setItem('anilist_username', cachedUsername);
+                }
+                username = cachedUsername;
                 document.getElementById('display-user').innerText = `@${username}`;
                 loadData();
             } catch (e) { handleLogout(); }
@@ -167,14 +231,25 @@
             return json.data;
         }
 
-        async function loadData(force = false) {
-            let cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+        async function loadData(force = false, skipClear = false) {
+            let cached = null;
+            try {
+                const cachedStr = localStorage.getItem(CACHE_KEY);
+                cached = cachedStr ? JSON.parse(cachedStr) : null;
+            } catch (e) {
+                console.error('Cache parse error:', e);
+                cached = null;
+            }
+            
             const now = Date.now();
             const container = document.getElementById('list-container');
+            const isCacheValid = cached && cached.data && cached.time && (now - cached.time <= CACHE_EXPIRY);
             
-            if (force || !cached || (now - cached.time > CACHE_EXPIRY)) {
-                container.innerHTML = '';
-                document.getElementById('loading-indicator').classList.remove('hidden');
+            if (force || !isCacheValid) {
+                if (!skipClear) {
+                    container.innerHTML = '';
+                    document.getElementById('loading-indicator').classList.remove('hidden');
+                }
                 try {
                     const res = await gql(`
                         query ($name: String) {
@@ -188,12 +263,16 @@
                     localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
                 } catch (e) { 
                     console.error(e);
-                    container.innerHTML = `<p class="opacity-40 py-10 text-center text-xs">Error: ${e.message}</p>`;
+                    if (!skipClear) {
+                        container.innerHTML = `<p class="opacity-40 py-10 text-center text-xs">Error: ${e.message}</p>`;
+                    }
                     document.getElementById('loading-indicator').classList.add('hidden');
                     return;
                 }
             }
-            renderFilteredList(cached.data);
+            if (cached && cached.data) {
+                renderFilteredList(cached.data);
+            }
             document.getElementById('loading-indicator').classList.add('hidden');
         }
 
@@ -205,14 +284,105 @@
                 return e.status === currentTab;
             });
             filteredEntries.sort((a, b) => a.media.title.romaji.localeCompare(b.media.title.romaji));
+            updateTabCounts(data);
             renderList(filteredEntries);
+        }
+
+        function updateTabCounts(data) {
+            const counts = {};
+            data.forEach(e => {
+                if (e.status === 'CURRENT' || e.status === 'REPEATING') {
+                    counts['CURRENT'] = (counts['CURRENT'] || 0) + 1;
+                } else {
+                    counts[e.status] = (counts[e.status] || 0) + 1;
+                }
+            });
+            ['CURRENT', 'PLANNING', 'COMPLETED', 'DROPPED', 'PAUSED'].forEach(tab => {
+                const countEl = document.getElementById(`count-${tab}`);
+                if (countEl) countEl.innerText = `(${counts[tab] || 0})`;
+            });
+        }
+
+        async function addAnimeWithStatus(status) {
+            if (!pendingAnimeToAdd) return;
+            
+            const anime = pendingAnimeToAdd;
+            toggleModal('add-status-modal', false);
+            
+            // Show success immediately (optimistic UI)
+            const successMsg = document.getElementById('success-message');
+            successMsg.innerText = `✓ Added to ${getStatusLabel(status)}`;
+            successMsg.classList.remove('hidden');
+            setTimeout(() => {
+                successMsg.classList.add('hidden');
+            }, 3000);
+            
+            // Update cache optimistically before API call
+            const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+            if (cached && cached.data) {
+                const newEntry = {
+                    id: anime.id,
+                    status: status,
+                    progress: 0,
+                    media: {
+                        id: anime.id,
+                        title: { romaji: anime.title.romaji },
+                        episodes: anime.episodes,
+                        coverImage: anime.coverImage,
+                        siteUrl: anime.siteUrl
+                    }
+                };
+                cached.data.push(newEntry);
+                localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
+                renderFilteredList(cached.data);
+            }
+            
+            // Make API call in background
+            try {
+                await gql(`mutation($m:Int, $s:MediaListStatus){SaveMediaListEntry(mediaId:$m, status:$s){id}}`, { 
+                    m: anime.id, 
+                    s: status 
+                });
+            } catch (e) {
+                console.error(e);
+                alert('Error adding anime: ' + e.message);
+            }
+            pendingAnimeToAdd = null;
+        }
+        
+        function getStatusLabel(status) {
+            const labels = {
+                'CURRENT': 'Watching',
+                'PLANNING': 'Planning',
+                'COMPLETED': 'Completed',
+                'DROPPED': 'Dropped',
+                'PAUSED': 'Paused',
+                'REPEATING': 'Rewatching'
+            };
+            return labels[status] || status;
         }
 
         function forceRefresh() {
             const syncBtn = document.getElementById('sync-btn');
             syncBtn.classList.add('animate-spin');
-            loadData(true).finally(() => {
+            
+            // Show cached data immediately while syncing
+            const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+            if (cached) {
+                renderFilteredList(cached.data);
+            } else {
+                document.getElementById('loading-indicator').classList.remove('hidden');
+            }
+            
+            // Load fresh data in background without clearing the screen
+            loadData(true, true).finally(() => {
                 setTimeout(() => syncBtn.classList.remove('animate-spin'), 500);
+                // Show success message
+                const successMsg = document.getElementById('success-message');
+                successMsg.classList.remove('hidden');
+                setTimeout(() => {
+                    successMsg.classList.add('hidden');
+                }, 3000);
             });
         }
 
@@ -222,10 +392,10 @@
             entries.forEach(e => {
                 const row = document.createElement('div');
                 row.id = `row-item-${e.id}`;
-                row.className = "item-row flex items-center py-0.5 transition-colors border-b border-white/5";
+                row.className = "item-row flex items-center py-0.5 transition-colors";
                 row.onclick = (event) => { if(event.target.tagName !== 'BUTTON') openEditModal(e); };
                 row.innerHTML = `
-                    <img src="${e.media.coverImage.medium}" class="thumb-square bg-gray-800">
+                    <img src="${e.media.coverImage.medium}" class="thumb-square bg-gray-800" loading="lazy">
                     <div class="flex-1 px-4 text-sm font-normal truncate opacity-90">${e.media.title.romaji}</div>
                     <div class="flex items-center gap-6 pr-2">
                         <div class="flex items-center gap-2 text-sm">
@@ -240,9 +410,11 @@
         }
 
         function openEditModal(entry) {
-            // THE GUARANTEE: Take any URL and force replace "medium" with "large" in the string
+            // Get the best available image: try large, then extraLarge, then medium
             let posterUrl = entry.media.coverImage.large || entry.media.coverImage.extraLarge || entry.media.coverImage.medium;
-            if (posterUrl.includes('/medium/')) {
+            
+            // If we ended up with medium, try to upgrade to large by URL replacement
+            if (posterUrl && posterUrl.includes('/medium/')) {
                 posterUrl = posterUrl.replace('/medium/', '/large/');
             }
             
@@ -279,6 +451,38 @@
                 saveBtn.disabled = false;
                 saveBtn.innerText = "Save Changes";
             };
+
+            const deleteBtn = document.getElementById('delete-entry-btn');
+            deleteBtn.onclick = async () => {
+                if (!confirm(`Are you sure you want to delete ${entry.media.title.romaji} from your list?`)) return;
+        
+                toggleModal('edit-modal', false);
+                
+                // Show success immediately (optimistic UI)
+                const successMsg = document.getElementById('success-message');
+                successMsg.innerText = '✓ Deleted from list';
+                successMsg.classList.remove('hidden');
+                setTimeout(() => {
+                    successMsg.classList.add('hidden');
+                }, 3000);
+                
+                // Remove from cache optimistically
+                const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+                if (cached) {
+                    cached.data = cached.data.filter(x => x.id !== entry.id);
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
+                    renderFilteredList(cached.data);
+                }
+        
+                // Call API in background
+                try {
+                    await gql(`mutation ($id: Int) { DeleteMediaListEntry(id: $id) { deleted } }`, { id: entry.id });
+                } catch (e) {
+                    console.error(e);
+                    alert("Error deleting: " + e.message);
+                }
+            };
+
             toggleModal('edit-modal', true);
         }
 
@@ -318,16 +522,16 @@
             resDiv.innerHTML = '';
             res.Page.media.forEach(m => {
                 const b = document.createElement('button');
-                b.className = "w-full flex items-center gap-3 p-2 hover:bg-white/5 rounded text-left text-xs";
+                b.className = "search-result-item w-full flex items-center gap-3 p-2 hover:bg-white/5 rounded text-left text-xs";
                 // Even search uses high res URLs now
                 let sUrl = m.coverImage.medium;
                 if (sUrl.includes('/medium/')) sUrl = sUrl.replace('/medium/', '/large/');
                 
                 b.innerHTML = `<img src="${sUrl}" class="w-8 h-8 object-cover rounded"> ${m.title.romaji}`;
                 b.onclick = async () => {
-                    await gql(`mutation($m:Int, $s:MediaListStatus){SaveMediaListEntry(mediaId:$m, status:$s){id}}`, { m: m.id, s: currentTab });
+                    pendingAnimeToAdd = m;
                     toggleModal('search-modal', false);
-                    forceRefresh();
+                    toggleModal('add-status-modal', true);
                 };
                 resDiv.appendChild(b);
             });
@@ -341,7 +545,20 @@
 
         function toggleModal(id, s) { 
             const m = document.getElementById(id);
-            m.classList.toggle('hidden', !s); 
+            if (s) {
+                // Opening modal
+                m.classList.remove('hidden');
+                m.classList.remove('closing');
+                m.classList.add('active');
+            } else {
+                // Closing modal with fade-out animation
+                m.classList.remove('active');
+                m.classList.add('closing');
+                setTimeout(() => {
+                    m.classList.add('hidden');
+                    m.classList.remove('closing');
+                }, 300);
+            }
             if (!s && id === 'search-modal') {
                 document.getElementById('search-in').value = '';
                 document.getElementById('search-results').innerHTML = '';
