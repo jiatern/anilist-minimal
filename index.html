@@ -47,6 +47,13 @@
                 height: 180px;
                 width: 100%;
             }
+            /* On small screens show only the icon for tabs to avoid horizontal scrolling */
+            .tabs-bar .tab-btn .tab-label,
+            .tabs-bar .tab-btn .count {
+                display: none;
+            }
+            .tabs-bar { padding: 8px; }
+            .tabs-bar .tab-btn { padding: 8px; border-radius: 8px; }
         }
         
         #search-modal.closing { animation: fadeOut 0.2s ease-out forwards; }
