@@ -512,16 +512,21 @@
             document.getElementById('edit-total-ep').innerText = latestEntry.media.episodes || '?';
             document.getElementById('edit-anilist-link').href = latestEntry.media.siteUrl;
             
-            // Set dates - convert from year/month/day format to YYYY-MM-DD
+            // Set dates - convert from year/month/day format to YYYY-MM-DD without using Date (avoid timezone shifts)
+            const pad2 = (v) => String(v).padStart(2, '0');
             if (latestEntry.startedAt && latestEntry.startedAt.year) {
-                const startDate = new Date(latestEntry.startedAt.year, (latestEntry.startedAt.month || 1) - 1, (latestEntry.startedAt.day || 1));
-                document.getElementById('edit-start-date-input').value = startDate.toISOString().split('T')[0];
+                const y = latestEntry.startedAt.year;
+                const m = latestEntry.startedAt.month || 1;
+                const d = latestEntry.startedAt.day || 1;
+                document.getElementById('edit-start-date-input').value = `${String(y).padStart(4,'0')}-${pad2(m)}-${pad2(d)}`;
             } else {
                 document.getElementById('edit-start-date-input').value = '';
             }
             if (latestEntry.completedAt && latestEntry.completedAt.year) {
-                const endDate = new Date(latestEntry.completedAt.year, (latestEntry.completedAt.month || 1) - 1, (latestEntry.completedAt.day || 1));
-                document.getElementById('edit-finish-date-input').value = endDate.toISOString().split('T')[0];
+                const y2 = latestEntry.completedAt.year;
+                const m2 = latestEntry.completedAt.month || 1;
+                const d2 = latestEntry.completedAt.day || 1;
+                document.getElementById('edit-finish-date-input').value = `${String(y2).padStart(4,'0')}-${pad2(m2)}-${pad2(d2)}`;
             } else {
                 document.getElementById('edit-finish-date-input').value = '';
             }
@@ -577,12 +582,12 @@
                 const startDateVal = document.getElementById('edit-start-date-input').value;
                 const endDateVal = document.getElementById('edit-finish-date-input').value;
                 if (startDateVal) {
-                    const sd = new Date(startDateVal);
-                    startDate = { year: sd.getFullYear(), month: sd.getMonth() + 1, day: sd.getDate() };
+                    const p = String(startDateVal).split('-').map(x => Number(x));
+                    if (p.length === 3 && !p.some(isNaN)) startDate = { year: p[0], month: p[1], day: p[2] };
                 }
                 if (endDateVal) {
-                    const ed = new Date(endDateVal);
-                    endDate = { year: ed.getFullYear(), month: ed.getMonth() + 1, day: ed.getDate() };
+                    const q = String(endDateVal).split('-').map(x => Number(x));
+                    if (q.length === 3 && !q.some(isNaN)) endDate = { year: q[0], month: q[1], day: q[2] };
                 }
                 
                 // Normalize helpers
