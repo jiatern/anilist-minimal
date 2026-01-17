@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AniList Simplified Frontend</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #2b2b2b; color: #e2e2e2; font-family: Ubuntu; }
+        .item-row:hover { background-color: rgba(255, 255, 255, 0.05); cursor: pointer; }
+        .thumb-square { width: 48px; height: 48px; object-fit: cover; object-position: center; border-radius: 4px; }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; opacity: 1 !important; }
+        .loading-spinner { border: 2px solid rgba(255,255,255,0.1); border-top: 2px solid #3b82f6; border-radius: 50%; width: 14px; height: 14px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="min-h-screen pb-10">
+
+    <div id="login-screen" class="hidden flex items-center justify-center min-h-screen px-4">
+        <div class="bg-[#1f1f1f] p-8 rounded-xl border border-white/10 w-full max-w-md shadow-2xl">
+            <h1 class="text-2xl font-bold mb-2">Login</h1>
+            <p class="text-sm opacity-50 mb-6">Enter your AniList Access Token.</p>
+            <input type="password" id="token-input" placeholder="Paste token..." class="w-full bg-[#2b2b2b] border border-white/10 rounded px-4 py-3 mb-4 focus:border-blue-500 outline-none">
+            <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-bold transition">Login</button>
+        </div>
+    </div>
+
+    <div id="app-screen" class="hidden max-w-4xl mx-auto px-4 py-8">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-xl font-bold opacity-90">My Anime List</h1>
+                <div id="display-user" class="text-xs opacity-40 uppercase tracking-widest mt-1"></div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="handleLogout()" class="text-[10px] opacity-30 hover:opacity-100 uppercase mr-4">Logout</button>
+                <button onclick="forceRefresh()" id="sync-btn" title="Refresh & Clear Cache" class="p-2 hover:bg-white/5 rounded-lg opacity-60"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg></button>
+                <button onclick="toggleModal('search-modal', true)" class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold">+ Add</button>
+            </div>
+        </header>
+
+        <nav class="flex gap-6 border-b border-white/5 mb-6 overflow-x-auto">
+            <button onclick="switchTab('CURRENT')" id="tab-CURRENT" class="pb-3 text-sm opacity-50 tab-active whitespace-nowrap">Watching</button>
+            <button onclick="switchTab('PLANNING')" id="tab-PLANNING" class="pb-3 text-sm opacity-50 whitespace-nowrap">Planning</button>
+            <button onclick="switchTab('COMPLETED')" id="tab-COMPLETED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Completed</button>
+            <button onclick="switchTab('DROPPED')" id="tab-DROPPED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Dropped</button>
+            <button onclick="switchTab('PAUSED')" id="tab-PAUSED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Paused</button>
+        </nav>
+
+        <div id="loading-indicator" class="hidden flex items-center gap-2 text-xs opacity-50 mb-4">
+            <div class="loading-spinner"></div> <span id="loading-text">Loading...</span>
+        </div>
+
+        <div id="list-container" class="flex flex-col border-t border-white/5"></div>
+    </div>
+
+    <div id="search-modal" onclick="handleOutsideClick(event)" class="fixed inset-0 bg-black/85 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-[#1f1f1f] w-full max-w-lg rounded-xl overflow-hidden border border-white/5 shadow-2xl">
+            <div class="p-4 border-b border-white/5 flex justify-between">
+                <span class="text-xs font-bold uppercase opacity-50">Search Anime</span>
+                <button onclick="toggleModal('search-modal', false)" class="opacity-50 text-xl px-2">&times;</button>
+            </div>
+            <div class="p-4">
+                <input type="text" id="search-in" placeholder="Search..." class="w-full bg-[#2b2b2b] p-3 rounded border border-white/10 outline-none focus:border-blue-500 mb-4 text-sm">
+                <div id="search-results" class="space-y-1 max-h-60 overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" onclick="handleOutsideClick(event)" class="fixed inset-0 bg-black/85 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-[#1f1f1f] w-full max-w-2xl rounded-xl overflow-hidden border border-white/5 shadow-2xl flex flex-col md:flex-row">
+            <div class="w-full md:w-72 flex-shrink-0 bg-black/20">
+                <img id="edit-poster" src="" class="w-full h-full object-cover">
+            </div>
+            
+            <div class="flex-1 p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-6">
+                        <h3 id="edit-title" class="font-bold text-xl leading-tight pr-4">Title</h3>
+                        <button onclick="toggleModal('edit-modal', false)" class="opacity-50 text-2xl leading-none">&times;</button>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] uppercase opacity-40 font-bold block mb-1 tracking-wider">Status</label>
+                                <select id="edit-status-select" class="w-full bg-[#2b2b2b] border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 transition-colors">
+                                    <option value="CURRENT">Watching</option>
+                                    <option value="PLANNING">Planning</option>
+                                    <option value="COMPLETED">Completed</option>
+                                    <option value="DROPPED">Dropped</option>
+                                    <option value="PAUSED">Paused</option>
+                                    <option value="REPEATING">Rewatching</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase opacity-40 font-bold block mb-1 tracking-wider">Progress</label>
+                                <div class="flex items-center bg-[#2b2b2b] border border-white/10 rounded-lg px-3 py-2">
+                                    <input type="number" id="edit-progress-input" class="w-full bg-transparent text-sm outline-none text-blue-400 font-bold" min="0">
+                                    <span class="text-xs opacity-40 mx-1">/</span>
+                                    <span id="edit-total-ep" class="text-xs opacity-40">?</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <a id="edit-anilist-link" href="#" target="_blank" class="flex items-center justify-center gap-2 text-blue-400 text-xs py-2.5 border border-blue-400/20 rounded-lg hover:bg-blue-400/10 transition-all font-medium">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            View on AniList
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <button id="save-edit-btn" class="w-full bg-blue-600 hover:bg-blue-700 py-3.5 rounded-xl font-bold text-sm transition-all shadow-lg active:scale-[0.98]">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'https://graphql.anilist.co';
+        const CACHE_EXPIRY = 1000 * 60 * 30; 
+        const CACHE_KEY = `cache_v4_full_list`; // Bumped key
+        let currentTab = 'CURRENT';
+        let username = "";
+
+        function checkAuth() {
+            const token = localStorage.getItem('anilist_token');
+            if (!token) {
+                document.getElementById('login-screen').classList.remove('hidden');
+            } else {
+                document.getElementById('app-screen').classList.remove('hidden');
+                initApp();
+            }
+        }
+
+        function handleLogin() {
+            const val = document.getElementById('token-input').value;
+            if (val) { localStorage.setItem('anilist_token', val); location.reload(); }
+        }
+
+        function handleLogout() { localStorage.clear(); location.reload(); }
+
+        async function initApp() {
+            try {
+                const data = await gql(`query { Viewer { name } }`);
+                username = data.Viewer.name;
+                document.getElementById('display-user').innerText = `@${username}`;
+                loadData();
+            } catch (e) { handleLogout(); }
+        }
+
+        async function gql(query, vars = {}) {
+            const token = localStorage.getItem('anilist_token');
+            const res = await fetch(API, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query, variables: vars })
+            });
+            const json = await res.json();
+            if (json.errors) throw new Error(json.errors[0].message);
+            return json.data;
+        }
+
+        async function loadData(force = false) {
+            let cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+            const now = Date.now();
+            const container = document.getElementById('list-container');
+            
+            if (force || !cached || (now - cached.time > CACHE_EXPIRY)) {
+                container.innerHTML = '';
+                document.getElementById('loading-indicator').classList.remove('hidden');
+                try {
+                    const res = await gql(`
+                        query ($name: String) {
+                            MediaListCollection(userName: $name, type: ANIME) {
+                                lists { entries { id status progress media { id title { romaji } episodes coverImage { extraLarge large medium } siteUrl } } }
+                            }
+                        }`, { name: username });
+                    
+                    const allEntries = (res.MediaListCollection.lists || []).flatMap(l => l.entries || []);
+                    cached = { time: now, data: allEntries };
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
+                } catch (e) { 
+                    console.error(e);
+                    container.innerHTML = `<p class="opacity-40 py-10 text-center text-xs">Error: ${e.message}</p>`;
+                    document.getElementById('loading-indicator').classList.add('hidden');
+                    return;
+                }
+            }
+            renderFilteredList(cached.data);
+            document.getElementById('loading-indicator').classList.add('hidden');
+        }
+
+        function renderFilteredList(data) {
+            const container = document.getElementById('list-container');
+            container.innerHTML = '';
+            const filteredEntries = data.filter(e => {
+                if (currentTab === 'CURRENT') return e.status === 'CURRENT' || e.status === 'REPEATING';
+                return e.status === currentTab;
+            });
+            filteredEntries.sort((a, b) => a.media.title.romaji.localeCompare(b.media.title.romaji));
+            renderList(filteredEntries);
+        }
+
+        function forceRefresh() {
+            const syncBtn = document.getElementById('sync-btn');
+            syncBtn.classList.add('animate-spin');
+            loadData(true).finally(() => {
+                setTimeout(() => syncBtn.classList.remove('animate-spin'), 500);
+            });
+        }
+
+        function renderList(entries) {
+            const container = document.getElementById('list-container');
+            container.innerHTML = entries.length ? '' : '<p class="opacity-20 py-10 text-center text-xs italic">No entries in this list</p>';
+            entries.forEach(e => {
+                const row = document.createElement('div');
+                row.id = `row-item-${e.id}`;
+                row.className = "item-row flex items-center py-0.5 transition-colors border-b border-white/5";
+                row.onclick = (event) => { if(event.target.tagName !== 'BUTTON') openEditModal(e); };
+                row.innerHTML = `
+                    <img src="${e.media.coverImage.medium}" class="thumb-square bg-gray-800">
+                    <div class="flex-1 px-4 text-sm font-normal truncate opacity-90">${e.media.title.romaji}</div>
+                    <div class="flex items-center gap-6 pr-2">
+                        <div class="flex items-center gap-2 text-sm">
+                            <span id="prog-${e.id}" class="font-medium text-base text-blue-400">${e.progress}</span>
+                            <span class="text-base font-normal opacity-60">/ ${e.media.episodes || '?'}</span>
+                        </div>
+                        <button onclick="event.stopPropagation(); updateProg(${e.id}, ${e.progress}, this)" 
+                                class="w-10 text-center text-base font-mono opacity-60 hover:opacity-100 hover:text-blue-400 transition">+1</button>
+                    </div>`;
+                container.appendChild(row);
+            });
+        }
+
+        function openEditModal(entry) {
+            // THE GUARANTEE: Take any URL and force replace "medium" with "large" in the string
+            let posterUrl = entry.media.coverImage.large || entry.media.coverImage.extraLarge || entry.media.coverImage.medium;
+            if (posterUrl.includes('/medium/')) {
+                posterUrl = posterUrl.replace('/medium/', '/large/');
+            }
+            
+            document.getElementById('edit-poster').src = posterUrl; 
+            document.getElementById('edit-title').innerText = entry.media.title.romaji;
+            document.getElementById('edit-status-select').value = entry.status;
+            document.getElementById('edit-progress-input').value = entry.progress;
+            document.getElementById('edit-total-ep').innerText = entry.media.episodes || '?';
+            document.getElementById('edit-anilist-link').href = entry.media.siteUrl;
+            
+            const saveBtn = document.getElementById('save-edit-btn');
+            saveBtn.onclick = async () => {
+                const newStatus = document.getElementById('edit-status-select').value;
+                const newProgress = parseInt(document.getElementById('edit-progress-input').value);
+                saveBtn.disabled = true;
+                saveBtn.innerText = "Saving...";
+                try {
+                    await gql(`mutation ($id: Int, $status: MediaListStatus, $progress: Int) { 
+                        SaveMediaListEntry(id: $id, status: $status, progress: $progress) { id status progress } 
+                    }`, { id: entry.id, status: newStatus, progress: newProgress });
+                    
+                    const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+                    if (cached) {
+                        const idx = cached.data.findIndex(x => x.id === entry.id);
+                        if (idx !== -1) {
+                            cached.data[idx].status = newStatus;
+                            cached.data[idx].progress = newProgress;
+                            localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
+                            renderFilteredList(cached.data);
+                        }
+                    }
+                    toggleModal('edit-modal', false);
+                } catch (e) { alert(e.message); }
+                saveBtn.disabled = false;
+                saveBtn.innerText = "Save Changes";
+            };
+            toggleModal('edit-modal', true);
+        }
+
+        async function updateProg(id, cur, btn) {
+            const newCount = cur + 1;
+            btn.disabled = true;
+            btn.classList.add('opacity-20');
+            try {
+                await gql(`mutation ($id: Int, $progress: Int) { SaveMediaListEntry(id: $id, progress: $progress) { id progress } }`, { id, progress: newCount });
+                document.getElementById(`prog-${id}`).innerText = newCount;
+                btn.onclick = (e) => { e.stopPropagation(); updateProg(id, newCount, btn); };
+                const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+                if (cached) {
+                    const idx = cached.data.findIndex(x => x.id === id);
+                    if (idx !== -1) {
+                        cached.data[idx].progress = newCount;
+                        localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
+                    }
+                }
+            } catch (e) { alert(e.message); }
+            btn.disabled = false;
+            btn.classList.remove('opacity-20');
+        }
+
+        function switchTab(status) {
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('tab-active'));
+            const activeBtn = document.getElementById(`tab-${status}`);
+            if (activeBtn) activeBtn.classList.add('tab-active');
+            currentTab = status;
+            loadData();
+        }
+
+        document.getElementById('search-in').addEventListener('input', debounce(async (e) => {
+            if (e.target.value.length < 3) return;
+            const res = await gql(`query($s:String){Page(perPage:5){media(search:$s,type:ANIME){id title{romaji}coverImage{medium large extraLarge}siteUrl episodes}}}`, { s: e.target.value });
+            const resDiv = document.getElementById('search-results');
+            resDiv.innerHTML = '';
+            res.Page.media.forEach(m => {
+                const b = document.createElement('button');
+                b.className = "w-full flex items-center gap-3 p-2 hover:bg-white/5 rounded text-left text-xs";
+                // Even search uses high res URLs now
+                let sUrl = m.coverImage.medium;
+                if (sUrl.includes('/medium/')) sUrl = sUrl.replace('/medium/', '/large/');
+                
+                b.innerHTML = `<img src="${sUrl}" class="w-8 h-8 object-cover rounded"> ${m.title.romaji}`;
+                b.onclick = async () => {
+                    await gql(`mutation($m:Int, $s:MediaListStatus){SaveMediaListEntry(mediaId:$m, status:$s){id}}`, { m: m.id, s: currentTab });
+                    toggleModal('search-modal', false);
+                    forceRefresh();
+                };
+                resDiv.appendChild(b);
+            });
+        }, 500));
+
+        function handleOutsideClick(e) {
+            if (e.target.id === 'search-modal' || e.target.id === 'edit-modal') {
+                toggleModal(e.target.id, false);
+            }
+        }
+
+        function toggleModal(id, s) { 
+            const m = document.getElementById(id);
+            m.classList.toggle('hidden', !s); 
+            if (!s && id === 'search-modal') {
+                document.getElementById('search-in').value = '';
+                document.getElementById('search-results').innerHTML = '';
+            }
+        }
+        function debounce(f, t) { let i; return (...a) => { clearTimeout(i); i = setTimeout(() => f(...a), t); }; }
+
+        checkAuth();
+    </script>
+</body>
+</html>
