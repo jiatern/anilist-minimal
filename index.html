@@ -30,6 +30,18 @@
         #edit-modal.active { animation: fadeIn 0.2s ease-out; }
         #edit-modal > div { animation: slideInUp 0.3s ease-out; }
         
+        /* Mobile optimizations */
+        @media (max-width: 767px) {
+            #edit-modal > div {
+                flex-direction: column;
+                max-height: 90vh;
+            }
+            .edit-poster-container {
+                height: 180px;
+                width: 100%;
+            }
+        }
+        
         #search-modal.closing { animation: fadeOut 0.2s ease-out forwards; }
         #search-modal.closing > div { animation: slideDown 0.3s ease-out forwards; }
         #edit-modal.closing { animation: fadeOut 0.2s ease-out forwards; }
@@ -76,10 +88,10 @@
 
         <nav class="flex gap-6 border-b border-white/5 mb-2 overflow-x-auto">
             <button onclick="switchTab('CURRENT')" id="tab-CURRENT" class="pb-3 text-sm opacity-50 tab-active whitespace-nowrap">Watching <span id="count-CURRENT" class="text-xs opacity-40">(0)</span></button>
-            <button onclick="switchTab('PLANNING')" id="tab-PLANNING" class="pb-3 text-sm opacity-50 whitespace-nowrap">Planning <span id="count-PLANNING" class="text-xs opacity-40">(0)</span></button>
             <button onclick="switchTab('COMPLETED')" id="tab-COMPLETED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Completed <span id="count-COMPLETED" class="text-xs opacity-40">(0)</span></button>
+            <button onclick="switchTab('PLANNING')" id="tab-PLANNING" class="pb-3 text-sm opacity-50 whitespace-nowrap">Planning <span id="count-PLANNING" class="text-xs opacity-40">(0)</span></button>
             <button onclick="switchTab('DROPPED')" id="tab-DROPPED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Dropped <span id="count-DROPPED" class="text-xs opacity-40">(0)</span></button>
-            <button onclick="switchTab('PAUSED')" id="tab-PAUSED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Paused <span id="count-PAUSED" class="text-xs opacity-40">(0)</span></button>
+            <button onclick="switchTab('PAUSED')" id="tab-PAUSED" class="pb-3 text-sm opacity-50 whitespace-nowrap">On Hold <span id="count-PAUSED" class="text-xs opacity-40">(0)</span></button>
         </nav>
 
         <div id="loading-indicator" class="hidden flex items-center gap-2 text-xs opacity-50 mb-4">
@@ -114,18 +126,18 @@
             </div>
             <div class="p-4 space-y-2">
                 <button onclick="addAnimeWithStatus('CURRENT')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Watching</button>
-                <button onclick="addAnimeWithStatus('PLANNING')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Planning</button>
                 <button onclick="addAnimeWithStatus('COMPLETED')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Completed</button>
+                <button onclick="addAnimeWithStatus('PLANNING')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Planning</button>
                 <button onclick="addAnimeWithStatus('DROPPED')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Dropped</button>
-                <button onclick="addAnimeWithStatus('PAUSED')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Paused</button>
+                <button onclick="addAnimeWithStatus('PAUSED')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">On Hold</button>
                 <button onclick="addAnimeWithStatus('REPEATING')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-sm transition-colors">Rewatching</button>
             </div>
         </div>
     </div>
 
     <div id="edit-modal" onclick="handleOutsideClick(event)" class="fixed inset-0 bg-black/85 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-[#1f1f1f] w-full max-w-2xl rounded-xl overflow-hidden border border-white/5 shadow-2xl flex flex-col md:flex-row">
-            <div class="w-full md:w-72 flex-shrink-0 bg-black/20">
+        <div class="bg-[#1f1f1f] w-full max-w-2xl rounded-xl overflow-hidden border border-white/5 shadow-2xl flex flex-col md:flex-row max-h-[90vh] md:max-h-none">
+            <div class="edit-poster-container w-full md:w-72 flex-shrink-0 bg-black/20 md:max-h-none">
                 <img id="edit-poster" src="" class="w-full h-full object-cover">
             </div>
             
@@ -136,16 +148,16 @@
                         <button onclick="toggleModal('edit-modal', false)" class="opacity-50 text-2xl leading-none">&times;</button>
                     </div>
                     
-                    <div class="space-y-6">
+                    <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-[10px] uppercase opacity-40 font-bold block mb-1 tracking-wider">Status</label>
-                                <select id="edit-status-select" class="w-full bg-[#2b2b2b] border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 transition-colors">
+                                <select id="edit-status-select" class="w-full bg-[#2b2b2b] border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 transition-colors h-10">
                                     <option value="CURRENT">Watching</option>
                                     <option value="PLANNING">Planning</option>
                                     <option value="COMPLETED">Completed</option>
                                     <option value="DROPPED">Dropped</option>
-                                    <option value="PAUSED">Paused</option>
+                                    <option value="PAUSED">On Hold</option>
                                     <option value="REPEATING">Rewatching</option>
                                 </select>
                             </div>
@@ -156,6 +168,28 @@
                                     <span class="text-xs opacity-40 mx-1">/</span>
                                     <span id="edit-total-ep" class="text-xs opacity-40">?</span>
                                 </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] uppercase opacity-40 font-bold block mb-1 tracking-wider">Score</label>
+                                <input type="number" id="edit-score-input" class="w-full bg-[#2b2b2b] border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 text-blue-400 font-bold" min="0" max="10" step="0.1" placeholder="0-10">
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase opacity-40 font-bold block mb-1 tracking-wider">Rewatches</label>
+                                <input type="number" id="edit-repeat-input" class="w-full bg-[#2b2b2b] border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 text-blue-400 font-bold" min="0" placeholder="0">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] uppercase opacity-40 font-bold block mb-1 tracking-wider">Start Date</label>
+                                <input type="date" id="edit-start-date-input" class="w-full bg-[#2b2b2b] border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 text-blue-400">
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase opacity-40 font-bold block mb-1 tracking-wider">Finish Date</label>
+                                <input type="date" id="edit-finish-date-input" class="w-full bg-[#2b2b2b] border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 text-blue-400">
                             </div>
                         </div>
 
@@ -254,7 +288,7 @@
                     const res = await gql(`
                         query ($name: String) {
                             MediaListCollection(userName: $name, type: ANIME) {
-                                lists { entries { id status progress media { id title { romaji } episodes coverImage { extraLarge large medium } siteUrl } } }
+                                lists { entries { id status progress score startedAt { year month day } completedAt { year month day } repeat media { id title { romaji } episodes coverImage { extraLarge large medium } siteUrl } } }
                             }
                         }`, { name: username });
                     
@@ -276,7 +310,7 @@
             document.getElementById('loading-indicator').classList.add('hidden');
         }
 
-        function renderFilteredList(data) {
+        function renderFilteredList(data, skipAnimation = false) {
             const container = document.getElementById('list-container');
             container.innerHTML = '';
             const filteredEntries = data.filter(e => {
@@ -285,7 +319,7 @@
             });
             filteredEntries.sort((a, b) => a.media.title.romaji.localeCompare(b.media.title.romaji));
             updateTabCounts(data);
-            renderList(filteredEntries);
+            renderList(filteredEntries, skipAnimation);
         }
 
         function updateTabCounts(data) {
@@ -356,7 +390,7 @@
                 'PLANNING': 'Planning',
                 'COMPLETED': 'Completed',
                 'DROPPED': 'Dropped',
-                'PAUSED': 'Paused',
+                'PAUSED': 'On Hold',
                 'REPEATING': 'Rewatching'
             };
             return labels[status] || status;
@@ -386,32 +420,43 @@
             });
         }
 
-        function renderList(entries) {
+        function renderList(entries, skipAnimation = false) {
             const container = document.getElementById('list-container');
             container.innerHTML = entries.length ? '' : '<p class="opacity-20 py-10 text-center text-xs italic">No entries in this list</p>';
+            const showScore = currentTab === 'COMPLETED' || currentTab === 'DROPPED';
             entries.forEach(e => {
                 const row = document.createElement('div');
                 row.id = `row-item-${e.id}`;
-                row.className = "item-row flex items-center py-0.5 transition-colors";
+                row.className = "item-row flex items-center py-0.5 transition-colors group";
+                if (skipAnimation) {
+                    row.style.animation = 'none';
+                }
                 row.onclick = (event) => { if(event.target.tagName !== 'BUTTON') openEditModal(e); };
                 row.innerHTML = `
                     <img src="${e.media.coverImage.medium}" class="thumb-square bg-gray-800" loading="lazy">
                     <div class="flex-1 px-4 text-sm font-normal truncate opacity-90">${e.media.title.romaji}</div>
                     <div class="flex items-center gap-6 pr-2">
-                        <div class="flex items-center gap-2 text-sm">
-                            <span id="prog-${e.id}" class="font-medium text-base text-blue-400">${e.progress}</span>
-                            <span class="text-base font-normal opacity-60">/ ${e.media.episodes || '?'}</span>
+                        <div class="flex items-center gap-1 text-sm">
+                            <span id="prog-${e.id}" class="font-medium text-base text-blue-400 w-6 text-right">${e.progress}</span>
+                            <button onclick="event.stopPropagation(); updateProg(${e.id}, ${e.progress}, this)" 
+                                    class="text-base opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer hover:text-blue-400">+</button>
+                            <span class="text-base font-normal opacity-60">/</span>
+                            <span class="text-base font-normal opacity-60 ml-3 w-6">${e.media.episodes || '?'}</span>
                         </div>
-                        <button onclick="event.stopPropagation(); updateProg(${e.id}, ${e.progress}, this)" 
-                                class="w-10 text-center text-base font-mono opacity-60 hover:opacity-100 hover:text-blue-400 transition">+1</button>
+                        ${showScore ? `<div class="text-sm opacity-100 ml-3 w-6 text-right">${e.score ? e.score.toFixed(1) : '-'}</div>` : ''}
                     </div>`;
                 container.appendChild(row);
             });
         }
 
         function openEditModal(entry) {
+            // Get latest entry data from cache to reflect any recent changes
+            const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+            const cachedEntry = cached && cached.data ? cached.data.find(x => x.id === entry.id) : entry;
+            const latestEntry = cachedEntry || entry;
+            
             // Get the best available image: try large, then extraLarge, then medium
-            let posterUrl = entry.media.coverImage.large || entry.media.coverImage.extraLarge || entry.media.coverImage.medium;
+            let posterUrl = latestEntry.media.coverImage.large || latestEntry.media.coverImage.extraLarge || latestEntry.media.coverImage.medium;
             
             // If we ended up with medium, try to upgrade to large by URL replacement
             if (posterUrl && posterUrl.includes('/medium/')) {
@@ -419,35 +464,117 @@
             }
             
             document.getElementById('edit-poster').src = posterUrl; 
-            document.getElementById('edit-title').innerText = entry.media.title.romaji;
-            document.getElementById('edit-status-select').value = entry.status;
-            document.getElementById('edit-progress-input').value = entry.progress;
-            document.getElementById('edit-total-ep').innerText = entry.media.episodes || '?';
-            document.getElementById('edit-anilist-link').href = entry.media.siteUrl;
+            document.getElementById('edit-title').innerText = latestEntry.media.title.romaji;
+            document.getElementById('edit-status-select').value = latestEntry.status;
+            document.getElementById('edit-progress-input').value = latestEntry.progress;
+            document.getElementById('edit-score-input').value = latestEntry.score || '';
+            document.getElementById('edit-repeat-input').value = latestEntry.repeat || 0;
+            document.getElementById('edit-total-ep').innerText = latestEntry.media.episodes || '?';
+            document.getElementById('edit-anilist-link').href = latestEntry.media.siteUrl;
+            
+            // Set dates - convert from year/month/day format to YYYY-MM-DD
+            if (latestEntry.startedAt && latestEntry.startedAt.year) {
+                const startDate = new Date(latestEntry.startedAt.year, (latestEntry.startedAt.month || 1) - 1, (latestEntry.startedAt.day || 1));
+                document.getElementById('edit-start-date-input').value = startDate.toISOString().split('T')[0];
+            } else {
+                document.getElementById('edit-start-date-input').value = '';
+            }
+            if (latestEntry.completedAt && latestEntry.completedAt.year) {
+                const endDate = new Date(latestEntry.completedAt.year, (latestEntry.completedAt.month || 1) - 1, (latestEntry.completedAt.day || 1));
+                document.getElementById('edit-finish-date-input').value = endDate.toISOString().split('T')[0];
+            } else {
+                document.getElementById('edit-finish-date-input').value = '';
+            }
             
             const saveBtn = document.getElementById('save-edit-btn');
             saveBtn.onclick = async () => {
                 const newStatus = document.getElementById('edit-status-select').value;
                 const newProgress = parseInt(document.getElementById('edit-progress-input').value);
+                const scoreVal = document.getElementById('edit-score-input').value;
+                const newScore = scoreVal ? parseFloat(scoreVal) : null;
+                
+                // Validate score
+                if (newScore !== null && newScore > 10) {
+                    alert('Score cannot be greater than 10.');
+                    return;
+                }
+                
+                const newRepeat = parseInt(document.getElementById('edit-repeat-input').value) || 0;
+                
+                // Convert dates to AniList format (YYYYMMDD)
+                let startDate = null, endDate = null;
+                const startDateVal = document.getElementById('edit-start-date-input').value;
+                const endDateVal = document.getElementById('edit-finish-date-input').value;
+                if (startDateVal) {
+                    const sd = new Date(startDateVal);
+                    startDate = { year: sd.getFullYear(), month: sd.getMonth() + 1, day: sd.getDate() };
+                }
+                if (endDateVal) {
+                    const ed = new Date(endDateVal);
+                    endDate = { year: ed.getFullYear(), month: ed.getMonth() + 1, day: ed.getDate() };
+                }
+                
                 saveBtn.disabled = true;
                 saveBtn.innerText = "Saving...";
-                try {
-                    await gql(`mutation ($id: Int, $status: MediaListStatus, $progress: Int) { 
-                        SaveMediaListEntry(id: $id, status: $status, progress: $progress) { id status progress } 
-                    }`, { id: entry.id, status: newStatus, progress: newProgress });
-                    
-                    const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
-                    if (cached) {
-                        const idx = cached.data.findIndex(x => x.id === entry.id);
-                        if (idx !== -1) {
-                            cached.data[idx].status = newStatus;
-                            cached.data[idx].progress = newProgress;
-                            localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
-                            renderFilteredList(cached.data);
-                        }
+                
+                // Update cache optimistically
+                const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+                if (cached) {
+                    const idx = cached.data.findIndex(x => x.id === entry.id);
+                    if (idx !== -1) {
+                        cached.data[idx].status = newStatus;
+                        cached.data[idx].progress = newProgress;
+                        if (newScore !== null) cached.data[idx].score = newScore;
+                        cached.data[idx].repeat = newRepeat;
+                        if (startDate) cached.data[idx].startedAt = startDate;
+                        if (endDate) cached.data[idx].completedAt = endDate;
+                        localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
+                        renderFilteredList(cached.data, true);
                     }
-                    toggleModal('edit-modal', false);
-                } catch (e) { alert(e.message); }
+                }
+                toggleModal('edit-modal', false);
+                
+                // Show success message
+                const successMsg = document.getElementById('success-message');
+                successMsg.innerText = '✓ Changes saved';
+                successMsg.classList.remove('hidden');
+                setTimeout(() => {
+                    successMsg.classList.add('hidden');
+                }, 3000);
+                
+                // Make API call in background
+                try {
+                    const mutationVars = { id: entry.id, status: newStatus, progress: newProgress, repeat: newRepeat };
+                    let query = `mutation ($id: Int, $status: MediaListStatus, $progress: Int, $repeat: Int`;
+                    let returnFields = `id status progress repeat`;
+                    
+                    if (newScore !== null) {
+                        mutationVars.score = newScore;
+                        query += `, $score: Float`;
+                        returnFields += ` score`;
+                    }
+                    if (startDate) {
+                        mutationVars.startDate = startDate;
+                        query += `, $startDate: FuzzyDateInput`;
+                        returnFields += ` startedAt { year month day }`;
+                    }
+                    if (endDate) {
+                        mutationVars.completedDate = endDate;
+                        query += `, $completedDate: FuzzyDateInput`;
+                        returnFields += ` completedAt { year month day }`;
+                    }
+                    
+                    query += `) { SaveMediaListEntry(id: $id, status: $status, progress: $progress`;
+                    if (newScore !== null) query += `, score: $score`;
+                    if (startDate) query += `, startedAt: $startDate`;
+                    if (endDate) query += `, completedAt: $completedDate`;
+                    query += `, repeat: $repeat) { ${returnFields} } }`;
+                    
+                    await gql(query, mutationVars);
+                } catch (e) {
+                    console.error(e);
+                    alert('Error saving changes: ' + e.message);
+                }
                 saveBtn.disabled = false;
                 saveBtn.innerText = "Save Changes";
             };
@@ -490,19 +617,34 @@
             const newCount = cur + 1;
             btn.disabled = true;
             btn.classList.add('opacity-20');
+            
+            // Update cache and render optimistically without animation
+            const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+            if (cached) {
+                const idx = cached.data.findIndex(x => x.id === id);
+                if (idx !== -1) {
+                    cached.data[idx].progress = newCount;
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
+                    renderFilteredList(cached.data, true);
+                }
+            }
+            
+            // Call API in background
             try {
                 await gql(`mutation ($id: Int, $progress: Int) { SaveMediaListEntry(id: $id, progress: $progress) { id progress } }`, { id, progress: newCount });
-                document.getElementById(`prog-${id}`).innerText = newCount;
-                btn.onclick = (e) => { e.stopPropagation(); updateProg(id, newCount, btn); };
-                const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+            } catch (e) { 
+                alert(e.message);
+                // Revert on error
+                document.getElementById(`prog-${id}`).innerText = cur;
+                btn.onclick = (e) => { e.stopPropagation(); updateProg(id, cur, btn); };
                 if (cached) {
                     const idx = cached.data.findIndex(x => x.id === id);
                     if (idx !== -1) {
-                        cached.data[idx].progress = newCount;
+                        cached.data[idx].progress = cur;
                         localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
                     }
                 }
-            } catch (e) { alert(e.message); }
+            }
             btn.disabled = false;
             btn.classList.remove('opacity-20');
         }
@@ -535,7 +677,7 @@
                 };
                 resDiv.appendChild(b);
             });
-        }, 500));
+        }, 850));
 
         function handleOutsideClick(e) {
             if (e.target.id === 'search-modal' || e.target.id === 'edit-modal') {
