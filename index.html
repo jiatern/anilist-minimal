@@ -25,6 +25,13 @@
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
         
         .loading-indicator { animation: fadeIn 0.3s ease-out; }
+        /* Tabs bar styles */
+        .tabs-bar { background: #242424; padding: 8px; border-radius: 12px; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.02); }
+        .tab-btn { background: transparent; color: #cfcfcf; border: none; padding: 6px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; opacity: 0.85; }
+        .tab-btn svg { color: #9ca3af; }
+        .tab-btn .count { color: #9ca3af; font-size: 11px; opacity: 0.7; margin-left: 6px; }
+        .tab-btn.tab-active { background: linear-gradient(180deg, #191919, #191919); color: #ffffff; }
+        .tab-btn.tab-active svg { color: #60a5fa; }
         #search-modal.active { animation: fadeIn 0.2s ease-out; }
         #search-modal > div { animation: slideInUp 0.3s ease-out; }
         #edit-modal.active { animation: fadeIn 0.2s ease-out; }
@@ -74,25 +81,51 @@
     </div>
 
     <div id="app-screen" class="hidden max-w-4xl mx-auto px-4 py-8">
-        <header class="flex justify-between items-center mb-8">
+        <header class="flex justify-between items-center mb-6">
             <div>
                 <h1 class="text-xl font-bold opacity-90">My Anime List</h1>
                 <div id="display-user" class="text-xs opacity-40 uppercase tracking-widest mt-1"></div>
             </div>
             <div class="flex gap-2">
-                <button onclick="handleLogout()" class="text-[10px] opacity-30 hover:opacity-100 uppercase mr-4">Logout</button>
+                    <button onclick="handleLogout()" class="text-[10px] opacity-30 hover:opacity-100 uppercase mr-4">Logout</button>
                 <button onclick="forceRefresh()" id="sync-btn" title="Refresh & Clear Cache" class="p-2 hover:bg-white/5 rounded-lg opacity-60"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg></button>
                 <button onclick="toggleModal('search-modal', true)" class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold">+ Add</button>
             </div>
         </header>
 
-        <nav class="flex gap-6 border-b border-white/5 mb-2 overflow-x-auto">
-            <button onclick="switchTab('CURRENT')" id="tab-CURRENT" class="pb-3 text-sm opacity-50 tab-active whitespace-nowrap">Watching <span id="count-CURRENT" class="text-xs opacity-40">(0)</span></button>
-            <button onclick="switchTab('COMPLETED')" id="tab-COMPLETED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Completed <span id="count-COMPLETED" class="text-xs opacity-40">(0)</span></button>
-            <button onclick="switchTab('PLANNING')" id="tab-PLANNING" class="pb-3 text-sm opacity-50 whitespace-nowrap">Planning <span id="count-PLANNING" class="text-xs opacity-40">(0)</span></button>
-            <button onclick="switchTab('DROPPED')" id="tab-DROPPED" class="pb-3 text-sm opacity-50 whitespace-nowrap">Dropped <span id="count-DROPPED" class="text-xs opacity-40">(0)</span></button>
-            <button onclick="switchTab('PAUSED')" id="tab-PAUSED" class="pb-3 text-sm opacity-50 whitespace-nowrap">On Hold <span id="count-PAUSED" class="text-xs opacity-40">(0)</span></button>
-        </nav>
+            <nav class="mb-5 overflow-x-auto flex justify-center">
+                <div class="tabs-bar inline-flex items-center gap-2">
+                    <button onclick="switchTab('CURRENT')" id="tab-CURRENT" class="tab-btn tab-active" title="Watching">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        <span class="tab-label">Watching</span>
+                        <span id="count-CURRENT" class="count">(0)</span>
+                    </button>
+
+                    <button onclick="switchTab('COMPLETED')" id="tab-COMPLETED" class="tab-btn" title="Completed">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span class="tab-label">Completed</span>
+                        <span id="count-COMPLETED" class="count">(0)</span>
+                    </button>
+
+                    <button onclick="switchTab('PLANNING')" id="tab-PLANNING" class="tab-btn" title="Planning">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 17 12 12 7 7"></polyline><line x1="12" y1="12" x2="20" y2="12"></line></svg>
+                        <span class="tab-label">Planned</span>
+                        <span id="count-PLANNING" class="count">(0)</span>
+                    </button>
+
+                    <button onclick="switchTab('PAUSED')" id="tab-PAUSED" class="tab-btn" title="On Hold">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                        <span class="tab-label">On Hold</span>
+                        <span id="count-PAUSED" class="count">(0)</span>
+                    </button>
+
+                    <button onclick="switchTab('DROPPED')" id="tab-DROPPED" class="tab-btn" title="Dropped">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
+                        <span class="tab-label">Dropped</span>
+                        <span id="count-DROPPED" class="count">(0)</span>
+                    </button>
+                </div>
+            </nav>
 
         <div id="loading-indicator" class="hidden flex items-center gap-2 text-xs opacity-50 mb-4">
             <div class="loading-spinner"></div> <span id="loading-text">Loading...</span>
@@ -467,7 +500,7 @@
             document.getElementById('edit-title').innerText = latestEntry.media.title.romaji;
             document.getElementById('edit-status-select').value = latestEntry.status;
             document.getElementById('edit-progress-input').value = latestEntry.progress;
-            document.getElementById('edit-score-input').value = latestEntry.score || '';
+            document.getElementById('edit-score-input').value = (typeof latestEntry.score === 'number') ? latestEntry.score : '';
             document.getElementById('edit-repeat-input').value = latestEntry.repeat || 0;
             document.getElementById('edit-total-ep').innerText = latestEntry.media.episodes || '?';
             document.getElementById('edit-anilist-link').href = latestEntry.media.siteUrl;
@@ -486,12 +519,43 @@
                 document.getElementById('edit-finish-date-input').value = '';
             }
             
+            // Helper to parse a YYYY-MM-DD string into AniList fuzzy date
+            const parseDateStr = (val) => {
+                if (!val) return null;
+                // if input is a Date-like string (from type=date) it's already YYYY-MM-DD
+                const parts = String(val).split('-');
+                if (parts.length !== 3) return null;
+                const y = parseInt(parts[0]);
+                const m = parseInt(parts[1]);
+                const d = parseInt(parts[2]);
+                if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+                return { year: y, month: m, day: d };
+            };
+
+            // Derive initial values from the populated inputs so comparisons match
+            const initialProgressInput = parseInt(document.getElementById('edit-progress-input').value);
+            const initialScoreInput = document.getElementById('edit-score-input').value;
+            const initialRepeatInput = parseInt(document.getElementById('edit-repeat-input').value);
+            const initialStartInput = document.getElementById('edit-start-date-input').value;
+            const initialEndInput = document.getElementById('edit-finish-date-input').value;
+
+            const initialValues = {
+                status: latestEntry.status,
+                progress: isNaN(initialProgressInput) ? (typeof latestEntry.progress === 'number' ? latestEntry.progress : 0) : initialProgressInput,
+                score: (initialScoreInput === '' || initialScoreInput === null || initialScoreInput === undefined) ? ((typeof latestEntry.score === 'number') ? latestEntry.score : null) : parseFloat(initialScoreInput),
+                repeat: isNaN(initialRepeatInput) ? (latestEntry.repeat || 0) : initialRepeatInput,
+                startDate: parseDateStr(initialStartInput) || latestEntry.startedAt || null,
+                endDate: parseDateStr(initialEndInput) || latestEntry.completedAt || null
+            };
+
             const saveBtn = document.getElementById('save-edit-btn');
             saveBtn.onclick = async () => {
                 const newStatus = document.getElementById('edit-status-select').value;
-                const newProgress = parseInt(document.getElementById('edit-progress-input').value);
+                // Normalize progress: if empty or invalid, keep initial value
+                const parsedProgress = parseInt(document.getElementById('edit-progress-input').value);
+                const newProgress = isNaN(parsedProgress) ? initialValues.progress : parsedProgress;
                 const scoreVal = document.getElementById('edit-score-input').value;
-                const newScore = scoreVal ? parseFloat(scoreVal) : null;
+                const newScore = (scoreVal === '' || scoreVal === null || scoreVal === undefined) ? null : parseFloat(scoreVal);
                 
                 // Validate score
                 if (newScore !== null && newScore > 10) {
@@ -501,7 +565,7 @@
                 
                 const newRepeat = parseInt(document.getElementById('edit-repeat-input').value) || 0;
                 
-                // Convert dates to AniList format (YYYYMMDD)
+                // Convert dates to AniList format
                 let startDate = null, endDate = null;
                 const startDateVal = document.getElementById('edit-start-date-input').value;
                 const endDateVal = document.getElementById('edit-finish-date-input').value;
@@ -512,6 +576,41 @@
                 if (endDateVal) {
                     const ed = new Date(endDateVal);
                     endDate = { year: ed.getFullYear(), month: ed.getMonth() + 1, day: ed.getDate() };
+                }
+                
+                // Normalize helpers
+                const normNum = (v) => (v === null || v === undefined || v === '') ? null : Number(v);
+                const normScore = (v) => (v === null || v === undefined || v === '') ? null : Number(v);
+                const normDate = (d) => {
+                    if (!d) return null;
+                    // if already object with year/month/day
+                    if (typeof d === 'object' && d.year) return { year: Number(d.year), month: Number(d.month || 0), day: Number(d.day || 0) };
+                    // if string YYYY-MM-DD
+                    if (typeof d === 'string') {
+                        const parts = d.split('-');
+                        if (parts.length !== 3) return null;
+                        const y = parseInt(parts[0]);
+                        const m = parseInt(parts[1]);
+                        const day = parseInt(parts[2]);
+                        if (isNaN(y) || isNaN(m) || isNaN(day)) return null;
+                        return { year: y, month: m, day: day };
+                    }
+                    return null;
+                };
+
+                const statusChanged = String(newStatus) !== String(initialValues.status);
+                const progressChanged = normNum(newProgress) !== normNum(initialValues.progress);
+                const scoreChanged = normScore(newScore) !== normScore(initialValues.score);
+                const repeatChanged = normNum(newRepeat) !== normNum(initialValues.repeat);
+                const startChanged = JSON.stringify(normDate(startDate)) !== JSON.stringify(normDate(initialValues.startDate));
+                const endChanged = JSON.stringify(normDate(endDate)) !== JSON.stringify(normDate(initialValues.endDate));
+
+                const hasChanges = statusChanged || progressChanged || scoreChanged || repeatChanged || startChanged || endChanged;
+
+                if (!hasChanges) {
+                    // No changes -> close modal and do not show success or call API
+                    toggleModal('edit-modal', false);
+                    return;
                 }
                 
                 saveBtn.disabled = true;
