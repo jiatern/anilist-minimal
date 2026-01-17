@@ -97,7 +97,7 @@ The app integrates with the AniList GraphQL API (`https://graphql.anilist.co`) t
 
 ### Caching Strategy
 
-- Full anime list is cached locally for 4 hours
+- Full anime list is cached locally for 4 hours (240 minutes)
 - Cache is versioned (`cache_v4_full_list`)
 - Manual refresh available via sync button
 - Optimistic updates for immediate UI feedback
